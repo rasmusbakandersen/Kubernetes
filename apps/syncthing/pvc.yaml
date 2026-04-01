@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: syncthing-config
+  namespace: syncthing
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""
+  volumeName: syncthing-config-pv
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: syncthing-documents
+  namespace: syncthing
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: syncthing-documents-pv
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: syncthing-musik
+  namespace: syncthing
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: syncthing-musik-pv
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: syncthing-macbook
+  namespace: syncthing
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: syncthing-macbook-pv
+  resources:
+    requests:
+      storage: 100Gi

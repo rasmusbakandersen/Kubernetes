@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-config-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Kubernetes/filebrowser-config
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-musik-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Music
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-media-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Media
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-syncthing-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Syncthing
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-pictures-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Pictures
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-documents-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Documents

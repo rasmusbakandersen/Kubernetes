@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox-redis
+  namespace: netbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbox-redis
+  template:
+    metadata:
+      labels:
+        app: netbox-redis
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: redis
+          image: docker.io/valkey/valkey:9.0-alpine
+          command: ["sh", "-c", "valkey-server --appendonly yes --requirepass $REDIS_PASSWORD"]
+          ports:
+            - containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: REDIS_PASSWORD
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: "500m"
+            requests:
+              memory: 64Mi
+              cpu: "10m"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox-redis
+  namespace: netbox
+spec:
+  selector:
+    app: netbox-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox-redis-cache
+  namespace: netbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbox-redis-cache
+  template:
+    metadata:
+      labels:
+        app: netbox-redis-cache
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: redis
+          image: docker.io/valkey/valkey:9.0-alpine
+          command: ["sh", "-c", "valkey-server --requirepass $REDIS_PASSWORD"]
+          ports:
+            - containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: REDIS_CACHE_PASSWORD
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: "500m"
+            requests:
+              memory: 64Mi
+              cpu: "10m"
+      volumes: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox-redis-cache
+  namespace: netbox
+spec:
+  selector:
+    app: netbox-redis-cache
+  ports:
+    - port: 6379
+      targetPort: 6379

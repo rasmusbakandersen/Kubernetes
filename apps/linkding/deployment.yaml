@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkding
+  namespace: linkding
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: linkding
+  template:
+    metadata:
+      labels:
+        app: linkding
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: linkding
+          image: sissbruecker/linkding:latest-alpine
+          ports:
+            - containerPort: 9090
+          env:
+            - name: LD_SUPERUSER_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-secrets
+                  key: LD_SUPERUSER_NAME
+            - name: LD_SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-secrets
+                  key: LD_SUPERUSER_PASSWORD
+            - name: LD_ENABLE_AUTH_PROXY
+              value: "True"
+            - name: LD_AUTH_PROXY_USERNAME_HEADER
+              value: HTTP_REMOTE_USER
+            - name: LD_AUTH_PROXY_LOGOUT_URL
+              value: https://auth1.sanxer.dk/logout
+          volumeMounts:
+            - name: data
+              mountPath: /etc/linkding/data
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "250m"
+            requests:
+              memory: 128Mi
+              cpu: "10m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: linkding-data

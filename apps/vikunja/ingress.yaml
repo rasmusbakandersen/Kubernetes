@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vikunja
+  namespace: vikunja
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-authelia@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: vikunja.sanxer.dk
+      http:
+        paths:
+          - backend:
+              service:
+                name: vikunja
+                port:
+                  number: 3456
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - vikunja.sanxer.dk
+      secretName: vikunja-tls

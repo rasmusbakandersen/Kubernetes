@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: peanut
+  namespace: peanut
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-authelia@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: peanut.sanxer.dk
+      http:
+        paths:
+          - backend:
+              service:
+                name: peanut
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - peanut.sanxer.dk
+      secretName: peanut-tls

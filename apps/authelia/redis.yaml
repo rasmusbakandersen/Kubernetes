@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authelia-redis
+  namespace: authelia
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authelia-redis
+  template:
+    metadata:
+      labels:
+        app: authelia-redis
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: redis
+          image: valkey/valkey:9-alpine
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: "250m"
+            requests:
+              memory: 64Mi
+              cpu: "10m"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authelia-redis
+  namespace: authelia
+spec:
+  selector:
+    app: authelia-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

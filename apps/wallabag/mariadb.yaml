@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallabag-db
+  namespace: wallabag
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wallabag-db
+  template:
+    metadata:
+      labels:
+        app: wallabag-db
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: mariadb
+          image: mariadb:11-noble
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallabag-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              value: wallabag
+            - name: MYSQL_USER
+              value: wallabag
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: wallabag-secrets
+                  key: WALLABAG_DB_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "500m"
+            requests:
+              memory: 128Mi
+              cpu: "10m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: wallabag-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallabag-db
+  namespace: wallabag
+spec:
+  selector:
+    app: wallabag-db
+  ports:
+    - port: 3306
+      targetPort: 3306

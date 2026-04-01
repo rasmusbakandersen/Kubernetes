@@ -1,0 +1,38 @@
+trivy:
+  ignoreUnfixed: true
+  mode: Standalone
+  severity: CRITICAL,HIGH,MEDIUM
+
+operator:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  scanJobResources:
+    requests:
+      cpu: 10m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  concurrentScanJobsLimit: 2
+  vulnerabilityReportsScanner: Trivy
+  configAuditReportsScanner: Trivy
+  scanJobTTL: "30m"
+
+serviceMonitor:
+  enabled: true
+  labels: {}
+
+excludeNamespaces: ""
+targetNamespaces: ""
+
+configAuditScannerEnabled: true
+rbacAssessmentScannerEnabled: true
+
+compliance:
+  cron: "0 6 * * *"

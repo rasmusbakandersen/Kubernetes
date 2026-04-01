@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: netbox-config-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Kubernetes/netbox/config
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: netbox-media-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Kubernetes/netbox/media

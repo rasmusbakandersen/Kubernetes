@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox
+  namespace: netbox
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbox
+  template:
+    metadata:
+      labels:
+        app: netbox
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: 0
+      containers:
+        - name: netbox
+          image: docker.io/netboxcommunity/netbox:v4.5-4.0.2
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: netbox-db
+            - name: DB_NAME
+              value: netbox
+            - name: DB_USER
+              value: netbox
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: DB_PASSWORD
+            - name: REDIS_HOST
+              value: netbox-redis
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: REDIS_PASSWORD
+            - name: REDIS_CACHE_HOST
+              value: netbox-redis-cache
+            - name: REDIS_CACHE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: REDIS_CACHE_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: SECRET_KEY
+            - name: API_TOKEN_PEPPER_1
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: API_TOKEN_PEPPER
+            - name: SUPERUSER_NAME
+              value: admin
+            - name: SUPERUSER_EMAIL
+              value: admin@example.com
+            - name: SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: SUPERUSER_PASSWORD
+            - name: SUPERUSER_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: SUPERUSER_API_TOKEN
+            - name: SKIP_SUPERUSER
+              value: "false"
+            - name: CORS_ORIGIN_ALLOW_ALL
+              value: "True"
+            - name: CSRF_TRUSTED_ORIGINS
+              value: https://netbox.sanxer.dk
+            - name: ALLOWED_HOSTS
+              value: netbox.sanxer.dk
+            - name: REMOTE_AUTH_ENABLED
+              value: "true"
+            - name: REMOTE_AUTH_HEADER
+              value: HTTP_REMOTE_USER
+            - name: REMOTE_AUTH_AUTO_CREATE_USER
+              value: "true"
+            - name: GRAPHQL_ENABLED
+              value: "true"
+            - name: WEBHOOKS_ENABLED
+              value: "true"
+            - name: REDIS_DATABASE
+              value: "0"
+            - name: REDIS_CACHE_DATABASE
+              value: "1"
+            - name: REDIS_SSL
+              value: "false"
+            - name: REDIS_CACHE_SSL
+              value: "false"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/netbox/config
+              readOnly: true
+            - name: media
+              mountPath: /opt/netbox/netbox/media
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "2"
+            requests:
+              memory: 512Mi
+              cpu: "10m"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: netbox-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: netbox-media

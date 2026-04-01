@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: trufflehog-egress
+  namespace: trufflehog
+spec:
+  podSelector:
+    matchLabels:
+      app: trufflehog
+  policyTypes:
+    - Egress
+    - Ingress
+  ingress: []
+  egress:
+    # Allow all egress - needed for GitHub download, Gitea clone, ntfy, DNS
+    # Gitea repos may use various ports for cloning
+    - {}

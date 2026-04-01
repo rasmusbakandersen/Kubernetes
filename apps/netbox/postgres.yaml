@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox-db
+  namespace: netbox
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: netbox-db
+  template:
+    metadata:
+      labels:
+        app: netbox-db
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: postgres
+          image: docker.io/postgres:18-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: netbox
+            - name: POSTGRES_USER
+              value: netbox
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: DB_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "1"
+            requests:
+              memory: 128Mi
+              cpu: "10m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: netbox-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbox-db
+  namespace: netbox
+spec:
+  selector:
+    app: netbox-db
+  ports:
+    - port: 5432
+      targetPort: 5432

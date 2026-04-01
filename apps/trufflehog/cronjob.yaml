@@ -1,0 +1,126 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: trufflehog-gitea-scan
+  namespace: trufflehog
+spec:
+  schedule: "0 6 * * 0"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: trufflehog
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: trufflehog
+              image: alpine:3.21
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  echo "=== TruffleHog Gitea Scan ==="
+
+                  apk add --no-cache curl jq git
+                  echo "Dependencies installed"
+
+                  # Download trufflehog binary
+                  ARCH=$(uname -m)
+                  case "$ARCH" in
+                    x86_64) ARCH="amd64" ;;
+                    aarch64) ARCH="arm64" ;;
+                  esac
+                  curl -sL "https://github.com/trufflesecurity/trufflehog/releases/download/v3.94.1/trufflehog_3.94.1_linux_${ARCH}.tar.gz" | tar xz -C /tmp
+                  chmod +x /tmp/trufflehog
+                  echo "TruffleHog binary ready"
+
+                  # Enumerate all repos from Gitea API
+                  REPOS=$(curl -sf -H "Authorization: token $GITEA_TOKEN" \
+                    "https://gitea.sanxer.dk/api/v1/repos/search?limit=50" | \
+                    jq -r '.data[].clone_url')
+
+                  if [ -z "$REPOS" ]; then
+                    echo "ERROR: No repos found or API call failed"
+                    exit 1
+                  fi
+
+                  echo "Found repos:"
+                  echo "$REPOS"
+
+                  TOTAL_COUNT=0
+                  ALL_RESULTS=""
+
+                  for REPO in $REPOS; do
+                    echo "Scanning: $REPO"
+                    AUTH_REPO=$(echo "$REPO" | sed "s|https://|https://${GITEA_TOKEN}@|")
+                    RESULTS=$(/tmp/trufflehog git --json "$AUTH_REPO" 2>/dev/null || true)
+
+                    if [ -n "$RESULTS" ]; then
+                      COUNT=$(echo "$RESULTS" | wc -l)
+                      TOTAL_COUNT=$((TOTAL_COUNT + COUNT))
+                      ALL_RESULTS="${ALL_RESULTS}${RESULTS}
+                  "
+                    fi
+                  done
+
+                  echo "Scan complete. Total secrets found: $TOTAL_COUNT"
+
+                  if [ "$TOTAL_COUNT" -gt 0 ]; then
+                    SUMMARY=$(echo "$ALL_RESULTS" | jq -r '
+                      "- \(.DetectorName) in \(.SourceMetadata.Data.Git.repository // "unknown")
+                    File: \(.SourceMetadata.Data.Git.file // "unknown")
+                    Commit: \(.SourceMetadata.Data.Git.commit[:8] // "unknown")
+                    Verified: \(.Verified)
+                  "' 2>/dev/null | head -100)
+
+                    curl -sf \
+                      -H "Title: TruffleHog: ${TOTAL_COUNT} secret(s) found" \
+                      -H "Priority: high" \
+                      -H "Tags: warning,key" \
+                      -d "TruffleHog found ${TOTAL_COUNT} secret(s) in Gitea repos:
+
+                  ${SUMMARY}" \
+                      https://ntfy.sanxer.dk/homelab-alerts
+                  else
+                    curl -sf \
+                      -H "Title: TruffleHog: Clean scan" \
+                      -H "Priority: low" \
+                      -H "Tags: white_check_mark" \
+                      -d "No secrets found across all Gitea repos." \
+                      https://ntfy.sanxer.dk/homelab-alerts
+                  fi
+              env:
+                - name: GITEA_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: trufflehog-secrets
+                      key: GITEA_TOKEN
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: false
+                capabilities:
+                  drop:
+                    - ALL
+              resources:
+                requests:
+                  memory: 256Mi
+                  cpu: 100m
+                limits:
+                  memory: 512Mi
+                  cpu: 500m
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 512Mi

@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbox-worker
+  namespace: netbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbox-worker
+  template:
+    metadata:
+      labels:
+        app: netbox-worker
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: 0
+      containers:
+        - name: worker
+          image: docker.io/netboxcommunity/netbox:v4.5-4.0.2
+          command: ["/opt/netbox/venv/bin/python", "/opt/netbox/netbox/manage.py", "rqworker"]
+          env:
+            - name: DB_HOST
+              value: netbox-db
+            - name: DB_NAME
+              value: netbox
+            - name: DB_USER
+              value: netbox
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: DB_PASSWORD
+            - name: REDIS_HOST
+              value: netbox-redis
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: REDIS_PASSWORD
+            - name: REDIS_CACHE_HOST
+              value: netbox-redis-cache
+            - name: REDIS_CACHE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: REDIS_CACHE_PASSWORD
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secrets
+                  key: SECRET_KEY
+            - name: REDIS_DATABASE
+              value: "0"
+            - name: REDIS_CACHE_DATABASE
+              value: "1"
+            - name: REDIS_SSL
+              value: "false"
+            - name: REDIS_CACHE_SSL
+              value: "false"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/netbox/config
+              readOnly: true
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "1"
+            requests:
+              memory: 128Mi
+              cpu: "10m"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: netbox-config

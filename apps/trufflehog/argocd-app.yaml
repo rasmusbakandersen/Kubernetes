@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: trufflehog
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ssh://git@gitea.sanxer.dk:2222/admin/Kubernetes.git
+    targetRevision: main
+    path: apps/trufflehog
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: trufflehog
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,29 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: minio-sanxer-dk-tls
+  namespace: minio
+spec:
+  secretName: minio-sanxer-dk-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - minio.sanxer.dk
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: minio-console
+  namespace: minio
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`minio.sanxer.dk`)
+      kind: Rule
+      services:
+        - name: minio-console
+          port: 9001
+  tls:
+    secretName: minio-sanxer-dk-tls

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authelia-db
+  namespace: authelia
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: authelia-db
+  template:
+    metadata:
+      labels:
+        app: authelia-db
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: authelia
+            - name: POSTGRES_USER
+              value: authelia
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: authelia-secrets
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: "500m"
+            requests:
+              memory: 128Mi
+              cpu: "10m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: authelia-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authelia-db
+  namespace: authelia
+spec:
+  selector:
+    app: authelia-db
+  ports:
+    - port: 5432
+      targetPort: 5432

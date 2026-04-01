@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-ml
+  namespace: immich
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: immich-ml
+  template:
+    metadata:
+      labels:
+        app: immich-ml
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: ml
+          image: ghcr.io/immich-app/immich-machine-learning:release
+          env:
+            - name: DB_URL
+              value: socket://immich-db:5432/immich
+            - name: REDIS_HOSTNAME
+              value: immich-redis
+          volumeMounts:
+            - name: cache
+              mountPath: /cache
+          resources:
+            limits:
+              memory: 4Gi
+              cpu: "2"
+            requests:
+              memory: 512Mi
+              cpu: "10m"
+      volumes:
+        - name: cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-ml
+  namespace: immich
+spec:
+  selector:
+    app: immich-ml
+  ports:
+    - port: 3003
+      targetPort: 3003

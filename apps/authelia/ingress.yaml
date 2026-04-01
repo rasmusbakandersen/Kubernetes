@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authelia
+  namespace: authelia
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: auth1.sanxer.dk
+      http:
+        paths:
+          - backend:
+              service:
+                name: authelia
+                port:
+                  number: 9091
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - auth1.sanxer.dk
+      secretName: authelia-tls

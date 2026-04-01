@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: syncthing-config-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Kubernetes/syncthing-config
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: syncthing-documents-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Documents
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: syncthing-musik-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Music
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: syncthing-macbook-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - soft
+    - timeo=50
+    - retrans=3
+  nfs:
+    server: 192.168.86.6
+    path: /nfs/Syncthing/macbook

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freshrss
+  namespace: freshrss
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: freshrss
+  template:
+    metadata:
+      labels:
+        app: freshrss
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: freshrss
+          image: lscr.io/linuxserver/freshrss:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Copenhagen
+            - name: TRUSTED_PROXY
+              value: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: "500m"
+            requests:
+              memory: 128Mi
+              cpu: "10m"
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: freshrss-config

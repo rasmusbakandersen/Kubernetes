@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallabag-redis
+  namespace: wallabag
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wallabag-redis
+  template:
+    metadata:
+      labels:
+        app: wallabag-redis
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: redis
+          image: valkey/valkey:9-alpine
+          command: ["redis-server", "--maxmemory", "64mb", "--maxmemory-policy", "allkeys-lru"]
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: "250m"
+            requests:
+              memory: 64Mi
+              cpu: "10m"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallabag-redis
+  namespace: wallabag
+spec:
+  selector:
+    app: wallabag-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

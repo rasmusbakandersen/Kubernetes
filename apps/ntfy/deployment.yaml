@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ntfy
+  namespace: ntfy
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ntfy
+  template:
+    metadata:
+      labels:
+        app: ntfy
+    spec:
+      enableServiceLinks: false
+      securityContext:
+        runAsUser: 0
+      containers:
+        - name: ntfy
+          image: binwiederhier/ntfy:latest
+          args: ["serve"]
+          ports:
+            - containerPort: 80
+          env:
+            - name: TZ
+              value: Europe/Copenhagen
+          volumeMounts:
+            - name: data
+              mountPath: /var/cache/ntfy
+              subPath: cache
+            - name: data
+              mountPath: /etc/ntfy
+              subPath: config
+            - name: data
+              mountPath: /var/lib/ntfy
+              subPath: db
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: "500m"
+            requests:
+              memory: 64Mi
+              cpu: "10m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: ntfy-data

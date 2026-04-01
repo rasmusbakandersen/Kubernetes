@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uptimekuma
+  namespace: uptimekuma
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: authelia-authelia@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: uptime.sanxer.dk
+      http:
+        paths:
+          - backend:
+              service:
+                name: uptimekuma
+                port:
+                  number: 3001
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - uptime.sanxer.dk
+      secretName: uptimekuma-tls
